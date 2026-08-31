@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rock Lobsters — Lineup Builder (Cards)</title>
+<style>
+  :root{
+    --navy:#0b1e3b;--navy2:#0f294f;--ice:#eef3f8;--red:#c8102e;--gold:#f2b134;
+    --muted:#7d8aa0;--panel:#12274a;--panel-line:#20406f;--white:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 50% -10%, #163765 0%, var(--navy) 55%, #071427 100%);
+    color:var(--ice);font-family:"Helvetica Neue",Arial,system-ui,sans-serif;min-height:100vh}
+  header.app{display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--panel-line);
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.06))}
+  .badge{width:40px;height:40px;border-radius:9px;background:var(--red);position:relative;overflow:hidden;flex:0 0 auto;
+    box-shadow:0 2px 0 #7d0a1c,inset 0 0 0 2px rgba(255,255,255,.15)}
+  .badge:before{content:"";position:absolute;left:8px;right:8px;bottom:8px;height:6px;background:var(--gold);border-radius:2px}
+  .badge:after{content:"";position:absolute;left:8px;top:8px;width:14px;height:14px;border-radius:50%;background:#fff;opacity:.85}
+  header.app h1{font-size:15px;letter-spacing:.16em;text-transform:uppercase;margin:0;font-weight:800}
+  header.app .sub{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .tabs{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .tab{border:1px solid var(--panel-line);background:transparent;color:var(--ice);padding:9px 15px;border-radius:8px;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:.15s}
+  .tab:hover{background:rgba(255,255,255,.06)}
+  .tab[aria-selected="true"]{background:var(--red);border-color:var(--red);box-shadow:0 2px 0 #7d0a1c}
+  main{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 74px)}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  aside{border-right:1px solid var(--panel-line);padding:18px 18px 40px;overflow:auto;background:rgba(3,10,22,.35)}
+  .panel-title{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .slotlabel{flex:0 0 116px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--white);font-weight:700;
+    display:flex;align-items:center;gap:8px}
+  .slotlabel .n{width:20px;height:20px;flex:0 0 auto;border-radius:5px;background:var(--panel);border:1px solid var(--panel-line);
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold)}
+  select{flex:1 1 auto;min-width:0;appearance:none;background:var(--panel);color:var(--ice);border:1px solid var(--panel-line);
+    border-radius:7px;padding:9px 10px;font-size:13px;font-family:inherit;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px}
+  select:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .iconbtn{flex:0 0 auto;width:34px;height:34px;border-radius:7px;border:1px solid var(--panel-line);
+    background:transparent;color:var(--muted);font-size:16px;cursor:pointer;line-height:1}
+  .iconbtn:hover{color:var(--white);border-color:var(--red);background:rgba(200,16,46,.12)}
+  .addbtn{width:100%;border:1px dashed var(--panel-line);background:transparent;color:var(--ice);padding:9px;
+    border-radius:8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;cursor:pointer;margin-top:2px}
+  .addbtn:hover{border-color:var(--gold);color:var(--gold)}
+  .hinttip{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:12px 2px 0}
+  .grouphdr{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:800;
+    margin:18px 0 9px;padding-top:12px;border-top:1px solid var(--panel-line)}
+  .note{font-size:13px;line-height:1.5;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid var(--panel-line);
+    border-radius:9px;padding:14px}
+  .note b{color:var(--ice)}
+  .stage-wrap{padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+  .stage{position:relative;width:100%;max-width:1280px;margin:0 auto;border:1px solid var(--panel-line);border-radius:12px;
+    overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45);background:#000;aspect-ratio:16/9}
+  canvas#preview{display:block;width:100%;height:100%}
+  .bar{display:flex;align-items:center;gap:12px;max-width:1280px;margin:0 auto;width:100%}
+  .hint{font-size:12px;color:var(--muted)}
+  .status{font-size:22px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;padding:13px 26px;border-radius:12px;
+    border:2px solid var(--panel-line);color:var(--muted);white-space:nowrap;line-height:1}
+  .status.warn{color:#3a2a00;border-color:#c78a12;background:#f2b134}
+  .status.ok{color:#06301a;border-color:#1a8f4e;background:#37d07f}
+  .spacer{flex:1 1 auto}
+  .export{border:none;cursor:pointer;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:12.5px;color:#fff;
+    background:var(--red);padding:12px 20px;border-radius:9px;box-shadow:0 3px 0 #7d0a1c;transition:.12s}
+  .export:hover{transform:translateY(-1px)} .export:active{transform:translateY(1px);box-shadow:0 1px 0 #7d0a1c}
+  .export:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none}
+  .ghost{border:1px solid var(--panel-line);background:transparent;color:var(--ice);padding:11px 15px;border-radius:9px;
+    font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;cursor:pointer}
+  .ghost:hover{border-color:var(--gold);color:var(--gold)}
+  .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(4,10,20,.8);
+    color:var(--muted);font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="badge" aria-hidden="true"></div>
+  <div>
+    <h1>Lineup Builder</h1>
+    <div class="sub">Athens Rock Lobsters · Cards</div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-page="start" aria-selected="true">Starting Lineup</button>
+    <button class="tab" role="tab" data-page="skaters" aria-selected="false">Tonight's Skaters</button>
+    <button class="tab" role="tab" data-page="inactive" aria-selected="false">Inactive</button>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <p class="panel-title" id="panelTitle">Starting Lineup</p>
+    <div id="controls"></div>
+  </aside>
+  <section class="stage-wrap">
+    <div class="stage">
+      <canvas id="preview" width="1920" height="1080"></canvas>
+      <div class="loading" id="loading">Loading artwork…</div>
+    </div>
+    <div class="bar">
+      <span class="hint" id="hint">Pick a player for each spot. Cards drop into the exact template positions.</span>
+      <span class="spacer"></span>
+      <span class="status" id="status"></span>
+      <button class="ghost" id="clearBtn">Clear page</button>
+      <button class="export" id="exportBtn" disabled>Export JPEG · 1920×1080</button>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===================== DATA (baked in) ===================== */
+let PLAYERS = [];
+const BG = {
+  start:    'backgrounds/BKG1_Starting_Lineup.jpg',
+  skaters:  'backgrounds/BKG2_Tonights_Skater_v2.png',
+  inactive: 'backgrounds/3_Inactive_Tongiht.jpg'
+};
+function titleCase(s){ return s.toLowerCase().replace(/(^|[^a-z])([a-z])/g,function(m,p,c){return p+c.toUpperCase();}); }
+function buildPlayers(files){
+  return files.map(function(fn){
+    var base = fn.replace(/\.[^.]+$/,'');
+    var parts = base.split('_');
+    var num = parseInt(parts[0],10);
+    var last = titleCase(parts[1]||'');
+    return { file:fn, num:num, last:last, label: last+', '+num, src:'cards/'+fn };
+  }).sort(function(a,b){ var A=a.last.toLowerCase(), B=b.last.toLowerCase(); return A<B?-1:A>B?1:a.num-b.num; });
+}
+/* ========================================================== */
+
+const OUT_W=1920, OUT_H=1080;
+
+// Exact magenta-template boxes (top-left x,y). All cards are 404x302.
+const SLOT_W=404, SLOT_H=302;
+const START_SLOTS = [
+  { key:'LW', n:1, label:'Left Wing',  x:109,  y:220 },
+  { key:'C',  n:2, label:'Center',     x:758,  y:220 },
+  { key:'RW', n:3, label:'Right Wing', x:1413, y:220 },
+  { key:'LD', n:4, label:'Left D',     x:310,  y:542 },
+  { key:'RD', n:5, label:'Right D',    x:1217, y:540 },
+  { key:'G',  n:6, label:'Goalie',     x:758,  y:607 },
+];
+
+const state = { page:'start', start:{}, inactive:[''], skaters:{ split:'8F4D', F:{}, D:{}, G:'' } };
+
+// Inactive Tonight — one exact layout per player count (1..5). Each box 432x324.
+const INA_W=432, INA_H=324;
+const INACTIVE_LAYOUTS = {
+  1: [ {x:744,y:321} ],
+  2: [ {x:458,y:321}, {x:1035,y:321} ],
+  3: [ {x:167,y:321}, {x:744,y:321}, {x:1321,y:321} ],
+  4: [ {x:458,y:240}, {x:1035,y:240}, {x:458,y:573}, {x:1035,y:573} ],
+  5: [ {x:458,y:224}, {x:1035,y:224}, {x:167,y:570}, {x:744,y:570}, {x:1321,y:570} ],
+};
+const INA_MAX = 5;
+
+// Tonight's Skaters — four splits, each a full 13-box map (F, D, G) exactly as drawn.
+// Box size 288x216 (4:3). Default split = 8F/4D.
+const SK_W=288, SK_H=216;
+const SK_SPLITS = ['10F2D','9F3D','8F4D','7F5D'];
+const SK_DEFAULT = '8F4D';
+const SK_LABELS = { '10F2D':'10F / 2D', '9F3D':'9F / 3D', '8F4D':'8F / 4D', '7F5D':'7F / 5D' };
+// Each entry: {F:[...], D:[...], G:{...}} in fill order.
+const SK_TEMPLATES = {
+  '10F2D':{
+    F:[{x:93,y:240},{x:415,y:240},{x:739,y:240},{x:93,y:472},{x:415,y:472},{x:739,y:472},{x:93,y:708},{x:415,y:708},{x:739,y:708},{x:1054,y:708}],
+    D:[{x:1120,y:240},{x:1444,y:240}],
+    G:{x:1283,y:475}
+  },
+  '9F3D':{
+    F:[{x:93,y:240},{x:415,y:240},{x:739,y:240},{x:93,y:472},{x:415,y:472},{x:739,y:472},{x:93,y:708},{x:415,y:708},{x:739,y:708}],
+    D:[{x:1120,y:240},{x:1444,y:240},{x:1281,y:499}],
+    G:{x:1281,y:762}
+  },
+  '8F4D':{
+    F:[{x:93,y:240},{x:415,y:240},{x:739,y:240},{x:93,y:472},{x:415,y:472},{x:739,y:472},{x:262,y:708},{x:584,y:708}],
+    D:[{x:1120,y:240},{x:1444,y:240},{x:1120,y:472},{x:1444,y:475}],
+    G:{x:1283,y:708}
+  },
+  '7F5D':{
+    F:[{x:93,y:240},{x:415,y:240},{x:739,y:240},{x:93,y:472},{x:415,y:472},{x:739,y:472},{x:415,y:708}],
+    D:[{x:1120,y:240},{x:1444,y:240},{x:1120,y:472},{x:1444,y:475},{x:1123,y:708}],
+    G:{x:1445,y:708}
+  },
+};
+const imgs={}, bgImgs={}; let ready=false;
+let byFile={};
+
+function preload(cb){
+  const tasks=[];
+  PLAYERS.forEach(p=> tasks.push(new Promise(res=>{const im=new Image();im.onload=()=>{imgs[p.file]=im;res()};im.onerror=res;im.src=p.src;})));
+  Object.keys(BG).forEach(k=> tasks.push(new Promise(res=>{const im=new Image();im.onload=()=>{bgImgs[k]=im;res()};im.onerror=res;im.src=BG[k];})));
+  Promise.all(tasks).then(cb);
+}
+function optionList(sel, used){
+  used = used || {};
+  let h='<option value="">— Select player —</option>';
+  PLAYERS.forEach(p=>{
+    const isSel = p.file===sel;
+    const loc = used[p.file];               // set if used anywhere in the app
+    const dis = loc && !isSel;
+    h += `<option value="${p.file}"${isSel?' selected':''}${dis?' disabled':''}>${p.label}${dis?'  — in '+loc:''}</option>`;
+  });
+  return h;
+}
+
+// Map of players already picked ANYWHERE -> which graphic they're on.
+// A player used on one page is unavailable on the others.
+function usedAcrossApp(){
+  const m = {};
+  Object.values(state.start).forEach(v=>{ if(v) m[v]='Starting Lineup'; });
+  Object.values(state.skaters.F).forEach(v=>{ if(v) m[v]="Tonight's Skaters"; });
+  Object.values(state.skaters.D).forEach(v=>{ if(v) m[v]="Tonight's Skaters"; });
+  if(state.skaters.G) m[state.skaters.G]="Tonight's Skaters";
+  state.inactive.forEach(v=>{ if(v) m[v]='Inactive'; });
+  return m;
+}
+
+// Filled / total for the current page.
+function pageCounts(){
+  if(state.page==='start') return { filled:Object.values(state.start).filter(Boolean).length, total:START_SLOTS.length };
+  if(state.page==='inactive') return { filled:state.inactive.filter(Boolean).length, total:state.inactive.length };
+  const t=SK_TEMPLATES[state.skaters.split];
+  const f=Object.values(state.skaters.F).filter(Boolean).length + Object.values(state.skaters.D).filter(Boolean).length + (state.skaters.G?1:0);
+  return { filled:f, total:t.F.length+t.D.length+1 };
+}
+
+// Rebuild controls + redraw + refresh status (used after any pick so duplicates re-gray live).
+function update(){ renderControls(); render(); }
+
+// Per-day, per-graphic export version (persists via localStorage when available).
+const memVer={};
+function verKey(dateStr,title){ return 'rlx_ver_'+dateStr+'_'+title; }
+function getVer(k){ try{ const s=localStorage.getItem(k); return s?(parseInt(s,10)||1):1; }catch(e){ return memVer[k]||1; } }
+function setVer(k,v){ try{ localStorage.setItem(k,String(v)); }catch(e){ memVer[k]=v; } }
+
+function render(){
+  const cv=document.getElementById('preview'), ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,OUT_W,OUT_H);
+  const bg=bgImgs[state.page]; if(bg) ctx.drawImage(bg,0,0,OUT_W,OUT_H);
+  if(state.page==='start'){
+    START_SLOTS.forEach(s=>{
+      const f=state.start[s.key]; if(!f) return;
+      const im=imgs[f]; if(im) ctx.drawImage(im, s.x, s.y, SLOT_W, SLOT_H);
+    });
+  }
+  else if(state.page==='inactive'){
+    const n=Math.min(Math.max(state.inactive.length,1),INA_MAX);
+    const layout=INACTIVE_LAYOUTS[n];
+    state.inactive.forEach((f,i)=>{
+      if(!f || i>=layout.length) return;
+      const im=imgs[f]; if(im) ctx.drawImage(im, layout[i].x, layout[i].y, INA_W, INA_H);
+    });
+  }
+  else if(state.page==='skaters'){
+    const t=SK_TEMPLATES[state.skaters.split];
+    t.F.forEach((b,i)=>{ const f=state.skaters.F[i]; if(f&&imgs[f]) ctx.drawImage(imgs[f], b.x, b.y, SK_W, SK_H); });
+    t.D.forEach((b,i)=>{ const f=state.skaters.D[i]; if(f&&imgs[f]) ctx.drawImage(imgs[f], b.x, b.y, SK_W, SK_H); });
+    const g=state.skaters.G; if(g&&imgs[g]) ctx.drawImage(imgs[g], t.G.x, t.G.y, SK_W, SK_H);
+  }
+  updateStatus();
+}
+function updateStatus(){
+  const el=document.getElementById('status'); if(!el) return;
+  const {filled,total}=pageCounts();
+  el.textContent = filled+' / '+total+' filled';
+  el.classList.toggle('warn', filled<total);
+  el.classList.toggle('ok', total>0 && filled===total);
+}
+
+function renderControls(){
+  const wrap=document.getElementById('controls');
+  const aside=document.querySelector('aside'); const sc=aside?aside.scrollTop:0;
+  const used=usedAcrossApp();
+  document.getElementById('panelTitle').textContent =
+    state.page==='start'?'Starting Lineup':state.page==='skaters'?"Tonight's Skaters":'Inactive Tonight';
+  wrap.innerHTML='';
+  if(state.page==='start'){
+    START_SLOTS.forEach(s=>{
+      const row=document.createElement('div'); row.className='row';
+      const lab=document.createElement('div'); lab.className='slotlabel';
+      lab.innerHTML=`<span class="n">${s.n}</span>${s.label}`;
+      const sel=document.createElement('select'); sel.innerHTML=optionList(state.start[s.key]||'', used);
+      sel.addEventListener('change',e=>{ state.start[s.key]=e.target.value; update(); });
+      row.appendChild(lab); row.appendChild(sel); wrap.appendChild(row);
+    });
+  }
+  else if(state.page==='inactive'){
+    state.inactive.forEach((v,i)=>{
+      const row=document.createElement('div'); row.className='row';
+      const lab=document.createElement('div'); lab.className='slotlabel';
+      lab.innerHTML=`<span class="n">${i+1}</span>Inactive`;
+      const sel=document.createElement('select'); sel.innerHTML=optionList(v||'', used);
+      sel.addEventListener('change',e=>{ state.inactive[i]=e.target.value; update(); });
+      row.appendChild(lab); row.appendChild(sel);
+      if(state.inactive.length>1){
+        const b=document.createElement('button'); b.className='iconbtn'; b.textContent='×'; b.title='Remove';
+        b.addEventListener('click',()=>{ state.inactive.splice(i,1); update(); });
+        row.appendChild(b);
+      }
+      wrap.appendChild(row);
+    });
+    if(state.inactive.length<INA_MAX){
+      const add=document.createElement('button'); add.className='addbtn'; add.textContent='+ Add inactive player';
+      add.addEventListener('click',()=>{ state.inactive.push(''); update(); });
+      wrap.appendChild(add);
+    }
+    const tip=document.createElement('p'); tip.className='hinttip';
+    tip.textContent = `${Math.min(state.inactive.length,INA_MAX)}-player layout · up to ${INA_MAX}`;
+    wrap.appendChild(tip);
+  }
+  else {
+    // Tonight's Skaters
+    const t = SK_TEMPLATES[state.skaters.split];
+    const srow=document.createElement('div'); srow.className='row';
+    const slab=document.createElement('div'); slab.className='slotlabel'; slab.style.flexBasis='70px'; slab.textContent='Split';
+    const ssel=document.createElement('select');
+    ssel.innerHTML=SK_SPLITS.map(s=>`<option value="${s}"${s===state.skaters.split?' selected':''}>${SK_LABELS[s]}</option>`).join('');
+    ssel.addEventListener('change',e=>{ state.skaters.split=e.target.value; update(); });
+    srow.appendChild(slab); srow.appendChild(ssel); wrap.appendChild(srow);
+
+    const grp=(title)=>{ const h=document.createElement('h4'); h.className='grouphdr'; h.textContent=title; wrap.appendChild(h); };
+    const drop=(labelText, value, onChange)=>{
+      const row=document.createElement('div'); row.className='row';
+      const lab=document.createElement('div'); lab.className='slotlabel'; lab.style.flexBasis='70px'; lab.textContent=labelText;
+      const sel=document.createElement('select'); sel.innerHTML=optionList(value||'', used);
+      sel.addEventListener('change',e=>onChange(e.target.value));
+      row.appendChild(lab); row.appendChild(sel); wrap.appendChild(row);
+    };
+    grp(`Forwards · ${t.F.length}`);
+    t.F.forEach((b,i)=> drop('F'+(i+1), state.skaters.F[i], v=>{ state.skaters.F[i]=v; update(); }));
+    grp(`Defense · ${t.D.length}`);
+    t.D.forEach((b,i)=> drop('D'+(i+1), state.skaters.D[i], v=>{ state.skaters.D[i]=v; update(); }));
+    grp('Goalie');
+    drop('G1', state.skaters.G, v=>{ state.skaters.G=v; update(); });
+  }
+  if(aside) aside.scrollTop=sc;
+}
+
+function exportJPEG(){
+  const {filled,total}=pageCounts();
+  if(filled<total){
+    if(!confirm(`Heads up — only ${filled} of ${total} spots are filled on this page.\nExport anyway with blank spots?`)) return;
+  }
+  const titleMap={start:'Starting_Lineup',skaters:'Tonights_Skaters',inactive:'Inactive_Tonight'};
+  const title=titleMap[state.page];
+  const d=new Date();
+  const dateStr=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const key=verKey(dateStr,title);
+  const v=getVer(key);
+  const fname=`${dateStr}_${title}_v${v}.jpg`;
+  const cv=document.getElementById('preview');
+  cv.toBlob(b=>{
+    const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fname;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
+    setVer(key, v+1);                 // next export today bumps the version
+  },'image/jpeg',0.95);
+}
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected','false'));
+  t.setAttribute('aria-selected','true'); state.page=t.dataset.page; renderControls(); render();
+}));
+document.getElementById('exportBtn').addEventListener('click',exportJPEG);
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  if(pageCounts().filled>0 && !confirm('Clear all picks on this page?')) return;
+  if(state.page==='start'){ state.start={}; }
+  else if(state.page==='inactive'){ state.inactive=['']; }
+  else if(state.page==='skaters'){ state.skaters={split:state.skaters.split, F:{}, D:{}, G:''}; }
+  renderControls(); render();
+});
+
+function boot(){
+  renderControls();
+  preload(function(){ ready=true; document.getElementById('loading').style.display='none';
+    document.getElementById('exportBtn').disabled=false; render(); });
+}
+(async function init(){
+  try{
+    const res = await fetch('cards.json', {cache:'no-store'});
+    if(!res.ok) throw new Error('http '+res.status);
+    const files = await res.json();
+    PLAYERS = buildPlayers(files);
+    byFile = {}; PLAYERS.forEach(function(p){ byFile[p.file]=p; });
+  }catch(e){
+    const el=document.getElementById('loading');
+    el.innerHTML='Could not load cards.json.<br><br>This hosted version must be opened from a web address (your Netlify link), not double-clicked from your computer.';
+    el.style.whiteSpace='normal'; el.style.textAlign='center'; el.style.padding='0 48px'; el.style.lineHeight='1.5';
+    return;
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
